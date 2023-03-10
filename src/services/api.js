@@ -18,3 +18,9 @@ export const fetchApi = async (searchQuery, page = 1) => {
 
   return response.data;
 };
+
+export const handleFetcImages = images => {
+  return images.map(({ id, tags, webformatURL, largeImageURL }) => {
+    return { id, tags, webformatURL, largeImageURL };
+  });
+};

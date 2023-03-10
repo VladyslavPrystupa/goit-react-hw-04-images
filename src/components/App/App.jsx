@@ -21,11 +21,11 @@ export const App = () => {
 
   useEffect(() => {
     if (searchQuery) {
-      const query = async () => {
+      async function fetchData() {
         try {
           setStatus('pending');
 
-          const response = await fetchApi(searchQuery);
+          const response = await fetchApi(searchQuery, page);
 
           if (response.hits.length === 0) {
             setImages([]);
@@ -33,51 +33,58 @@ export const App = () => {
               autoClose: 2000,
             });
           }
-          setImages(response.hits);
-          setPage(1);
+
+          setImages(prevImages => [...prevImages, ...response.hits]);
         } catch (error) {
           setError(error);
         } finally {
           setStatus('idle');
         }
-      };
-      query();
+      }
+      fetchData();
     }
-  }, [searchQuery]);
+  }, [searchQuery, page]);
 
-  useEffect(() => {
-    if (page !== 1) {
-      const query = async () => {
-        try {
-          setStatus('pending');
+  //   useEffect(() => {
+  //     console.log(321);
+  //     if (page !== 1) {
+  //       console.log(123);
+  //       const query = async () => {
+  //         try {
+  //           setStatus('pending');
 
-          const response = await fetchApi(searchQuery, page);
+  //           const response = await fetchApi(searchQuery, page);
 
-          setImages(prewImages => {
-            return [...prewImages, ...response.hits];
-          });
-        } catch (error) {
-          setError(error);
-        } finally {
-          setStatus('idle');
-        }
-      };
-      query();
-    }
-  }, [page, searchQuery]);
+  //           setImages(prevImages => {
+  //             return [...prevImages, ...response.hits];
+  //           });
+  //         } catch (error) {
+  //           setError(error);
+  //         } finally {
+  //           setStatus('idle');
+  //         }
+  //       };
+  //       query();
+  //     }
+  //   }, [page, searchQuery]);
 
   const toggleModal = () => {
     setShowModal(prewShowModal => !prewShowModal);
   };
 
   const loadMoreImages = () => {
-    setPage(prewPage => prewPage + 1);
+    setPage(prevPage => prevPage + 1);
   };
 
+  const handleSubmit = value => {
+    setSearchQuery(value);
+    setPage(1);
+    setImages([]);
+  };
   return (
     <>
       <ToastContainer />
-      <Searchbar onSearch={value => setSearchQuery(value)} />
+      <Searchbar onSearch={handleSubmit} />
 
       <ImageGallery
         images={images}
