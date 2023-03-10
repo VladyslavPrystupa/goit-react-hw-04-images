@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { FcSearch } from 'react-icons/fc';
 
@@ -9,54 +9,45 @@ import {
   Header,
 } from './Searchbar.styled';
 
-export class Searchbar extends Component {
-  state = {
-    searcValue: '',
+export const Searchbar = ({ onSearch }) => {
+  const [searcValue, setSearcValue] = useState('');
+
+  const handleChange = evt => {
+    const { value } = evt.target;
+    setSearcValue(value);
   };
 
-  handleChange = evt => {
-    const { name, value } = evt.target;
-    this.setState({ [name]: value });
+  const reset = () => {
+    setSearcValue('');
   };
 
-  handleSubmit = evt => {
+  const handleSubmit = evt => {
     evt.preventDefault();
-    const { searcValue } = this.state;
 
     if (searcValue.trim() === '') {
-      return toast.error('enter value!', { autoClose: 3000 });
+      return toast.error('enter value!', { autoClose: 2000 });
     }
 
-    this.props.onSearch(searcValue);
+    onSearch(searcValue);
 
-    this.reset();
+    reset();
   };
-
-  reset() {
-    this.setState({
-      searcValue: '',
-    });
-  }
-
-  render() {
-    const { searcValue } = this.state;
-    return (
-      <Header>
-        <Form onSubmit={this.handleSubmit}>
-          <SearchFormButton type="submit">
-            <FcSearch size="2em" />
-          </SearchFormButton>
-          <SearchFormInput
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            name="searcValue"
-            value={searcValue}
-            onChange={this.handleChange}
-          />
-        </Form>
-      </Header>
-    );
-  }
-}
+  return (
+    <Header>
+      <Form onSubmit={handleSubmit}>
+        <SearchFormButton type="submit">
+          <FcSearch size="2em" />
+        </SearchFormButton>
+        <SearchFormInput
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          name="searcValue"
+          value={searcValue}
+          onChange={handleChange}
+        />
+      </Form>
+    </Header>
+  );
+};

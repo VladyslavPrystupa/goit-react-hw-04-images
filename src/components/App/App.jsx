@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchApi } from '../../services/api';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import { Searchbar } from 'components/Searchbar/Searchbar';
@@ -10,110 +10,91 @@ import { Error } from 'components/Error/Error';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends Component {
-  state = {
-    images: [],
-    selectedImg: '',
-    searchQuery: '',
-    page: 1,
-    error: null,
-    showModal: false,
-    status: 'idle',
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [selectedImg, setSelectedImg] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [status, setStatus] = useState('idle');
 
-  async componentDidUpdate(_, prevState) {
-    const { searchQuery, page } = this.state;
+  useEffect(() => {
+    if (searchQuery) {
+      const query = async () => {
+        try {
+          setStatus('pending');
 
-    if (prevState.searchQuery !== searchQuery) {
-      try {
-        this.setState({ status: 'pending' });
+          const response = await fetchApi(searchQuery);
 
-        const response = await fetchApi(searchQuery);
-
-        if (response.hits.length === 0) {
-          this.setState({
-            images: [],
-          });
-          return toast.error('No such value, please enter something valid', {
-            autoClose: 2000,
-          });
+          if (response.hits.length === 0) {
+            setImages([]);
+            return toast.error('No such value, please enter something valid', {
+              autoClose: 2000,
+            });
+          }
+          setImages(response.hits);
+          setPage(1);
+        } catch (error) {
+          setError(error);
+        } finally {
+          setStatus('idle');
         }
-
-        this.setState({
-          images: response.hits,
-          page: 1,
-        });
-      } catch (error) {
-        this.setState({ error, status: 'error' });
-      } finally {
-        this.setState({ status: 'idle' });
-      }
-    }
-
-    if (prevState.page !== page && page !== 1) {
-      try {
-        this.setState({ status: 'pending' });
-
-        const response = await fetchApi(searchQuery, page);
-
-        this.setState(({ images }) => {
-          return {
-            images: [...images, ...response.hits],
-          };
-        });
-      } catch (error) {
-        this.setState({ error, status: 'error' });
-      } finally {
-        this.setState({ status: 'idle' });
-      }
-    }
-  }
-
-  handleSearch = value => {
-    this.setState({ searchQuery: value });
-  };
-
-  loadMoreImages = () => {
-    this.setState(({ page }) => {
-      return {
-        page: (page += 1),
       };
-    });
+      query();
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      const query = async () => {
+        try {
+          setStatus('pending');
+
+          const response = await fetchApi(searchQuery, page);
+
+          setImages(prewImages => {
+            return [...prewImages, ...response.hits];
+          });
+        } catch (error) {
+          setError(error);
+        } finally {
+          setStatus('idle');
+        }
+      };
+      query();
+    }
+  }, [page, searchQuery]);
+
+  const toggleModal = () => {
+    setShowModal(prewShowModal => !prewShowModal);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const loadMoreImages = () => {
+    setPage(prewPage => prewPage + 1);
   };
 
-  imgId = id => {
-    this.setState({ selectedImg: id });
-  };
+  return (
+    <>
+      <ToastContainer />
+      <Searchbar onSearch={value => setSearchQuery(value)} />
 
-  render() {
-    const { images, showModal, selectedImg, error, status } = this.state;
+      <ImageGallery
+        images={images}
+        onClick={toggleModal}
+        imgId={id => setSelectedImg(id)}
+      />
 
-    return (
-      <>
-        <ToastContainer />
-        <Searchbar onSearch={this.handleSearch} />
-
-        <ImageGallery
-          images={images}
-          onClick={this.toggleModal}
-          imgId={this.imgId}
-        />
-
-        {status === 'pending' && <Loader />}
-        {status === 'error' && <Error error={error.message} />}
-        {images.length > 0 && <Button loadMore={this.loadMoreImages} />}
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img src={selectedImg} alt="" />
-          </Modal>
-        )}
-      </>
-    );
-  }
-}
+      {status === 'pending' && <Loader />}
+      {error && <Error error={error.message} />}
+      {images.length > 0 && status !== 'pending' && (
+        <Button loadMore={loadMoreImages} />
+      )}
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          <img src={selectedImg} alt="" />
+        </Modal>
+      )}
+    </>
+  );
+};

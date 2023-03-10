@@ -18,6 +18,6 @@ ImageGallery.propTypes = {
       lgImgURL: PropTypes.string,
     })
   ).isRequired,
-  onClick: PropTypes.func.isRequired,
-  imgId: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
+  imgId: PropTypes.func,
 };
